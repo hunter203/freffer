@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit Card Interest Calculator</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    input {
+      background-color: #111;
+      color: white;
+      border: 1px solid red;
+      padding: 6px;
+      border-radius: 4px;
+      width: 100%;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+    canvas {
+      background: #111;
+      border: 1px solid red;
+      margin-top: 30px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="color: red;">Credit Card Interest Calculator</h1>
+
+  <label for="balance">Initial Balance ($):</label>
+  <input type="number" id="balance" value="2000">
+
+  <label for="rate">Annual Interest Rate (%):</label>
+  <input type="number" id="rate" value="24">
+
+  <label for="payment">Monthly Payment ($):</label>
+  <input type="number" id="payment" value="50">
+
+  <label for="months">Months to Simulate:</label>
+  <input type="number" id="months" value="24">
+
+  <canvas id="lineChart" height="200"></canvas>
+  <canvas id="barChart" height="200"></canvas>
+  <canvas id="pieChart" height="200"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const balanceInput = document.getElementById('balance');
+    const rateInput = document.getElementById('rate');
+    const paymentInput = document.getElementById('payment');
+    const monthsInput = document.getElementById('months');
+
+    const lineChartCtx = document.getElementById('lineChart').getContext('2d');
+    const barChartCtx = document.getElementById('barChart').getContext('2d');
+    const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+
+    let lineChart, barChart, pieChart;
+
+    function calculateAndRender() {
+      const balance = parseFloat(balanceInput.value);
+      const annualRate = parseFloat(rateInput.value);
+      const payment = parseFloat(paymentInput.value);
+      const months = parseInt(monthsInput.value);
+
+      let current = balance;
+      let totalInterest = 0;
+      let totalPaid = 0;
+
+      const labels = [];
+      const balances = [];
+      const interests = [];
+
+      for (let i = 1; i <= months; i++) {
+        const interest = current * (annualRate / 100 / 12);
+        totalInterest += interest;
+        totalPaid += payment;
+        current = current + interest - payment;
+        if (current < 0) current = 0;
+
+        labels.push(`Month ${i}`);
+        balances.push(current.toFixed(2));
+        interests.push(interest.toFixed(2));
+      }
+
+      const principalPaid = totalPaid - totalInterest;
+
+      if (lineChart) lineChart.destroy();
+      lineChart = new Chart(lineChartCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Balance ($)',
+            data: balances,
+            borderColor: 'red',
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: 'white' } } },
+          scales: {
+            x: { ticks: { color: 'white' } },
+            y: { ticks: { color: 'white' } }
+          }
+        }
+      });
+
+      if (barChart) barChart.destroy();
+      barChart = new Chart(barChartCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Monthly Interest ($)',
+            data: interests,
+            backgroundColor: 'red'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: 'white' } } },
+          scales: {
+            x: { ticks: { color: 'white' } },
+            y: { ticks: { color: 'white' } }
+          }
+        }
+      });
+
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(pieChartCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Interest Paid', 'Principal Paid'],
+          datasets: [{
+            data: [totalInterest.toFixed(2), principalPaid.toFixed(2)],
+            backgroundColor: ['#ff0000', '#800000']
+          }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: 'white' } } }
+        }
+      });
+    }
+
+    balanceInput.addEventListener('input', calculateAndRender);
+    rateInput.addEventListener('input', calculateAndRender);
+    paymentInput.addEventListener('input', calculateAndRender);
+    monthsInput.addEventListener('input', calculateAndRender);
+
+    calculateAndRender();
+  </script>
+</body>
+</html>
